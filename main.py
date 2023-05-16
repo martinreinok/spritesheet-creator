@@ -31,7 +31,6 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         self.graphics_view.setScene(self.graphics_scene)
         self.graphics_view.show()
 
-
     @staticmethod
     def error_messagebox(error_message):
         error_box = QtWidgets.QMessageBox()
@@ -105,19 +104,22 @@ class ApplicationWindow(QtWidgets.QMainWindow):
             images.append(cv2.imread(self.table.item(row, 1).text(), cv2.IMREAD_UNCHANGED))
 
         if not images:
-            self.error_messagebox("Images are missing!")
+            if not preview:
+                self.error_messagebox("Images are missing!")
             return
 
         # Make sure the image dimensions match
         if len(set([image.shape for image in images])) > 1:
-            self.error_messagebox("Images are not the same size!")
+            if not preview:
+                self.error_messagebox("Images are not the same size!")
             return
 
         image_height, image_width, _ = images[0].shape
 
         # Calculate the number of rows and total width of the spritesheet
         if int(self.ui.TilingNumber.text()) == 0:
-            self.error_messagebox("Change the column or row size!")
+            if not preview:
+                self.error_messagebox("Change the column or row size!")
             return
 
         rows, cols = self.calculate_sheet_size()
@@ -139,24 +141,25 @@ class ApplicationWindow(QtWidgets.QMainWindow):
             spritesheet[y:y + image_height, x:x + image_width, :3] = image[:, :, :3]  # Copy RGB channels
             spritesheet[y:y + image_height, x:x + image_width, 3] = image[:, :, 3]  # Copy alpha channel
 
-        # Save the spritesheet to disk with transparency
-        save_dialog = QtWidgets.QFileDialog()
-        save_dialog.setAcceptMode(QtWidgets.QFileDialog.AcceptSave)
-        file_destination, _ = save_dialog.getSaveFileName(self, "Save File", "", "PNG (*.png)")
+        if not preview:
+            # Save the spritesheet to disk
+            save_dialog = QtWidgets.QFileDialog()
+            save_dialog.setAcceptMode(QtWidgets.QFileDialog.AcceptSave)
+            file_destination, _ = save_dialog.getSaveFileName(self, "Save File", "", "PNG (*.png)")
 
-        if file_destination:
-            print(file_destination)
-            cv2.imwrite(file_destination, spritesheet)
+            if file_destination:
+                print(file_destination)
+                cv2.imwrite(file_destination, spritesheet)
+            else:
+                print("Cancelled")
         else:
-            print("Cancelled")
+            return spritesheet
 
     def calculate_sheet_size(self):
         """
-        :param images_amount: number of images in table
         :return: rows, cols
         """
         images_amount = self.table.rowCount()
-        print(images_amount)
         # Minimum is 1 to avoid division by 0
         tiling_number = max(int(self.ui.TilingNumber.text()), 1)
         if self.ui.TilingConstant.currentText() == "Columns":
@@ -176,6 +179,30 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         else:
             self.ui.TilingOtherNumber.setText(f"{cols} Columns")
 
+    def show_spritesheet_preview(self):
+        # If there are images in the table and there is a size for the spritesheet, show the preview
+        rows, cols = self.calculate_sheet_size()
+        # Update scene and view
+        self.graphics_view.viewport().update()
+        self.graphics_scene.clear()
+        if rows > 0 and cols > 0:
+            # show preview
+            if self.ui.ShowPreviewCheckbox.isEnabled() and self.ui.ShowPreviewCheckbox.isChecked():
+                temporary_spritesheet = self.create_spritesheet(preview=True)
+                if temporary_spritesheet is not None:
+                    temporary_spritesheet = cv2.cvtColor(temporary_spritesheet, cv2.COLOR_BGR2RGB)
+                    scene_image = QtGui.QImage(temporary_spritesheet.data, temporary_spritesheet.shape[1],
+                                               temporary_spritesheet.shape[0], QtGui.QImage.Format.Format_RGB888)
+                    pixmap = QtGui.QPixmap.fromImage(scene_image)
+                    # Add the image to the QGraphicsScene
+                    self.graphics_scene.addPixmap(pixmap)
+
+                    self.graphics_scene.setSceneRect(QtCore.QRectF(pixmap.rect()))
+                    self.graphics_view.setResizeAnchor(self.graphics_view.AnchorViewCenter)
+                    self.graphics_view.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
+                    self.graphics_view.fitInView(self.graphics_scene.sceneRect(),
+                                                 QtCore.Qt.AspectRatioMode.KeepAspectRatio)
+
 
 def main():
     app = QtWidgets.QApplication(sys.argv)
@@ -187,6 +214,8 @@ def main():
     GUI.ui.TilingNumber.textChanged.connect(GUI.rows_and_columns_logic)
     GUI.ui.TilingConstant.currentTextChanged.connect(GUI.rows_and_columns_logic)
     GUI.ui.SaveSpritesheetButton.clicked.connect(GUI.create_spritesheet)
+    GUI.ui.TilingNumber.textChanged.connect(GUI.show_spritesheet_preview)
+    GUI.ui.TilingConstant.currentTextChanged.connect(GUI.show_spritesheet_preview)
 
     # Show the GUI
     GUI.show()
