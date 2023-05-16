@@ -1,4 +1,4 @@
-from PyQt5 import QtWidgets, QtCore
+from PyQt5 import QtWidgets, QtCore, QtGui
 from GUI import Ui_MainWindow
 import sys
 import math
@@ -22,6 +22,15 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         self.ui.TilingConstant.addItem("Columns")
         self.ui.TilingConstant.addItem("Rows")
         self.rows_and_columns_logic()
+
+        # Graphics
+        self.graphics_scene = QtWidgets.QGraphicsScene()
+        self.graphics_scene.setBackgroundBrush(QtGui.QColor(220, 220, 220))
+
+        self.graphics_view = self.ui.SpritesheetPreview
+        self.graphics_view.setScene(self.graphics_scene)
+        self.graphics_view.show()
+
 
     @staticmethod
     def error_messagebox(error_message):
@@ -89,7 +98,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
             return True
         return super().eventFilter(source, event)
 
-    def create_spritesheet(self):
+    def create_spritesheet(self, preview=False):
         # Pull all images from the QtTable
         images = []
         for row in range(self.table.rowCount()):
@@ -111,18 +120,11 @@ class ApplicationWindow(QtWidgets.QMainWindow):
             self.error_messagebox("Change the column or row size!")
             return
 
-        if self.ui.TilingConstant.currentText() == "Columns":
-            cols = int(self.ui.TilingNumber.text())
-            rows = math.floor(len(images) / cols)
-            self.rows_and_columns_logic(modifier="Columns", new_value=rows)
-        else:
-            rows = int(self.ui.TilingNumber.text())
-            cols = math.ceil(len(images) / rows)
-            self.rows_and_columns_logic(modifier="Rows", new_value=cols)
+        rows, cols = self.calculate_sheet_size()
 
         # Create a blank spritesheet canvas with transparency
         spritesheet = np.zeros((image_height * rows, image_width * cols, 4), dtype=np.uint8)
-        spritesheet[:, :, 3] = 255  # Set the alpha channel to fully opaque
+        spritesheet[:, :, 3] = 0  # Set the alpha channel to fully opaque
 
         # Combine images into the spritesheet
         for i, image in enumerate(images):
@@ -133,11 +135,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
             x = col * image_width
             y = row * image_height
 
-            # Check if we are on the last row and there are no more columns left
-            if row == rows - 1 and col >= cols:
-                break
-
-            # Paste the image onto the spritesheet
+            # Paste the image
             spritesheet[y:y + image_height, x:x + image_width, :3] = image[:, :, :3]  # Copy RGB channels
             spritesheet[y:y + image_height, x:x + image_width, 3] = image[:, :, 3]  # Copy alpha channel
 
@@ -152,12 +150,31 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         else:
             print("Cancelled")
 
-    def rows_and_columns_logic(self, modifier=None, new_value=None):
-        current = self.ui.TilingConstant.currentText()
-        if current == "Columns" or modifier == "Columns":
-            self.ui.TilingOtherNumber.setText(f"{new_value} Rows")
+    def calculate_sheet_size(self):
+        """
+        :param images_amount: number of images in table
+        :return: rows, cols
+        """
+        images_amount = self.table.rowCount()
+        print(images_amount)
+        # Minimum is 1 to avoid division by 0
+        tiling_number = max(int(self.ui.TilingNumber.text()), 1)
+        if self.ui.TilingConstant.currentText() == "Columns":
+            cols = tiling_number
+            rows = math.ceil(images_amount / cols)
         else:
-            self.ui.TilingOtherNumber.setText(f"{new_value} Columns")
+            rows = tiling_number
+            cols = math.ceil(images_amount / rows)
+        return rows, cols
+
+    def rows_and_columns_logic(self):
+        current = self.ui.TilingConstant.currentText()
+        rows, cols = self.calculate_sheet_size()
+        print(rows, cols)
+        if current == "Columns":
+            self.ui.TilingOtherNumber.setText(f"{rows} Rows")
+        else:
+            self.ui.TilingOtherNumber.setText(f"{cols} Columns")
 
 
 def main():
@@ -167,6 +184,7 @@ def main():
     # Method Connections
     GUI.ui.AddImagesButton.clicked.connect(GUI.load_images)
     GUI.table.customContextMenuRequested.connect(GUI.on_customContextMenuRequested)
+    GUI.ui.TilingNumber.textChanged.connect(GUI.rows_and_columns_logic)
     GUI.ui.TilingConstant.currentTextChanged.connect(GUI.rows_and_columns_logic)
     GUI.ui.SaveSpritesheetButton.clicked.connect(GUI.create_spritesheet)
 
