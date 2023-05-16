@@ -1,6 +1,6 @@
 from PyQt5 import QtWidgets, QtCore, QtGui
 from GUI import Ui_MainWindow
-import sys
+from sys import argv, exit
 import math
 import numpy as np
 import cv2
@@ -205,7 +205,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
 
 
 def main():
-    app = QtWidgets.QApplication(sys.argv)
+    app = QtWidgets.QApplication(argv)
     GUI = ApplicationWindow()
 
     # Method Connections
@@ -219,7 +219,7 @@ def main():
 
     # Show the GUI
     GUI.show()
-    sys.exit(app.exec_())
+    exit(app.exec_())
 
 
 if __name__ == "__main__":
