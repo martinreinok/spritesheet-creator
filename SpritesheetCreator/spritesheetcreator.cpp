@@ -11,6 +11,9 @@
 #include <string>
 #include <algorithm>
 #include <QMessageBox>
+#include <cmath>
+#include <QImage>
+// #include <Qt>
 
 SpritesheetCreator::SpritesheetCreator(QWidget *parent)
     : QMainWindow(parent)
@@ -30,13 +33,23 @@ SpritesheetCreator::SpritesheetCreator(QWidget *parent)
     ui->TilingConstant->addItem("Columns");
     ui->TilingConstant->addItem("Rows");
 
+    // Graphics
+    graphics_scene = new QGraphicsScene();
+    graphics_scene->setBackgroundBrush(QColor(220, 220, 220));
+    ui->SpritesheetPreview->setScene(graphics_scene);
+    ui->SpritesheetPreview->show();
+
 
     // Connections to buttons
     connect(ui->AddImagesButton, SIGNAL(clicked(bool)), this, SLOT(load_images()));
     connect(ui->TilingNumber, SIGNAL(textChanged(QString)), this, SLOT(rows_and_columns_logic()));
     connect(ui->TilingConstant, SIGNAL(currentTextChanged(QString)), this, SLOT(rows_and_columns_logic()));
+    connect(ui->ImageTable, SIGNAL(itemChanged(QTableWidgetItem*)), this, SLOT(rows_and_columns_logic()));
     connect(ui->SaveSpritesheetButton, SIGNAL(clicked(bool)), this, SLOT(save_button()));
-    // connect(ui->TilingNumber, SIGNAL(textChanged(QString)), this, SLOT(rows_and_columns_logic()));
+    // UpdatePreview
+    connect(ui->TilingNumber, SIGNAL(textChanged(QString)), this, SLOT(show_spritesheet_preview()));
+    connect(ui->TilingConstant, SIGNAL(currentTextChanged(QString)), this, SLOT(show_spritesheet_preview()));
+
 
     rows_and_columns_logic();
 }
@@ -131,11 +144,11 @@ void SpritesheetCreator::calculate_sheet_size()
     qDebug() << "Rows: " << Tiles->Rows;
     if (ui->TilingConstant->currentText() == "Columns"){
         Tiles->Columns = tiling_number;
-        Tiles->Rows = std::max((int)(images_amount/Tiles->Columns + 0.5), 1);
+        Tiles->Rows = std::max((int) std::ceil(images_amount/Tiles->Columns), 1);
     }
     else {
         Tiles->Rows = tiling_number;
-        Tiles->Columns = std::max((int)(images_amount/Tiles->Rows + 0.5), 1);
+        Tiles->Columns = std::max((int) std::ceil(images_amount/Tiles->Rows), 1);
     }
 }
 
@@ -162,12 +175,53 @@ void SpritesheetCreator::save_button()
         return;
     }
     cv::Mat spritesheet = ImageProcessing->create_spritesheet(Tiles->Rows, Tiles->Columns, opencv_images);
-    if (spritesheet.empty()){
-        return;
-    }
+    if (spritesheet.empty()) { return; }
+
     QFileDialog file_dialog;
     QString filename = file_dialog.getSaveFileName(this, "Save file", "", "PNG (*.png)");
+    if (filename.isEmpty()) { return; }
+
     ImageProcessing->opencv_save_image(spritesheet, filename);
+}
+
+void SpritesheetCreator::show_spritesheet_preview() {
+    // https://stackoverflow.com/questions/45724457/c-opencv-mat-to-qpixmap-errors
+    ui->SpritesheetPreview->viewport()->update();
+    graphics_scene->clear();
+
+    if (ui->PreviewCheckbox->isChecked() && ui->ShowPreviewCheckbox->isChecked()) {
+        QVector<cv::Mat> opencv_images = ImageProcessing->get_images_from_table(ui->ImageTable);
+        bool images_are_same_size = ImageProcessing->validate_image_size(opencv_images);
+        if (!images_are_same_size) { return; }
+
+        cv::Mat spritesheet;
+        try {
+            spritesheet = ImageProcessing->create_spritesheet(Tiles->Rows, Tiles->Columns, opencv_images);
+        }
+        catch (...) {
+            qDebug() << "Preview failed";
+        }
+        if (spritesheet.empty()) { return; }
+
+        cv::Mat converted_spritesheet;
+        cv::cvtColor(spritesheet, converted_spritesheet, cv::COLOR_BGRA2RGB);
+
+        const uchar *qImageBuffer = (const uchar*)converted_spritesheet.data;
+
+        QImage img(qImageBuffer, converted_spritesheet.cols,
+                   converted_spritesheet.rows,
+                   converted_spritesheet.step, QImage::Format_RGB888);
+
+        QPixmap pixmap;
+        pixmap = QPixmap::fromImage(img);
+        graphics_scene->setSceneRect(pixmap.rect());
+        graphics_scene->addPixmap(pixmap);
+        ui->SpritesheetPreview->setScene(graphics_scene);
+        ui->SpritesheetPreview->setResizeAnchor(ui->SpritesheetPreview->AnchorViewCenter);
+        ui->SpritesheetPreview->setAlignment(Qt::AlignmentFlag::AlignCenter);
+        ui->SpritesheetPreview->fitInView(graphics_scene->sceneRect(), Qt::AspectRatioMode::KeepAspectRatio);
+        ui->SpritesheetPreview->show();
+    }
 }
 
 void SpritesheetCreator::on_actionClear_All_triggered()

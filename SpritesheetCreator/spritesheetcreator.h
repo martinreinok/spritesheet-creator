@@ -3,6 +3,7 @@
 
 #include <QMainWindow>
 #include <QObject>
+#include <QGraphicsView>
 #include <QWidget>
 #include <QTableWidget>
 #include "imageprocessor.h"
@@ -35,6 +36,7 @@ private slots:
     void rows_and_columns_logic();
     void error_messagebox(const QString& error_message);
     void save_button();
+    void show_spritesheet_preview();
 
     // Actions in the bar
     void on_actionClear_All_triggered();
@@ -46,5 +48,6 @@ private:
     Ui::SpritesheetCreator *ui;
     Tiling* Tiles;
     ImageProcessor* ImageProcessing;
+    QGraphicsScene* graphics_scene;
 };
 #endif // SPRITESHEETCREATOR_H

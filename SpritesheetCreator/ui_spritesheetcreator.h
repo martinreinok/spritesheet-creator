@@ -194,6 +194,7 @@ public:
         TilingNumber = new QSpinBox(groupBox);
         TilingNumber->setObjectName("TilingNumber");
         TilingNumber->setMinimum(1);
+        TilingNumber->setMaximum(1000);
 
         verticalLayout_6->addWidget(TilingNumber);
 

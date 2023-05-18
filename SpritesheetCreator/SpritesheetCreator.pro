@@ -27,6 +27,7 @@ LIBS += -LC:/opencv/build/install/x64/mingw/bin -lopencv_core460
 LIBS += -LC:/opencv/build/install/x64/mingw/bin -lopencv_highgui460
 LIBS += -LC:/opencv/build/install/x64/mingw/bin -lopencv_imgcodecs460
 LIBS += -LC:/opencv/build/install/x64/mingw/bin -lopencv_features2d460
+LIBS += -LC:/opencv/build/install/x64/mingw/bin -lopencv_imgproc460
 
 
 # Default rules for deployment.
