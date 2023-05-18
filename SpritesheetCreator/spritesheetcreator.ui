@@ -195,7 +195,11 @@
              <widget class="QComboBox" name="TilingConstant"/>
             </item>
             <item>
-             <widget class="QSpinBox" name="TilingNumber"/>
+             <widget class="QSpinBox" name="TilingNumber">
+              <property name="minimum">
+               <number>1</number>
+              </property>
+             </widget>
             </item>
            </layout>
           </item>

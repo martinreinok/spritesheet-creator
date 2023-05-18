@@ -5,6 +5,9 @@
 #include <QDropEvent>
 #include <QFileInfo>
 #include <QMimeData>
+#include <QVector>
+#include <string>
+#include <algorithm>
 
 SpritesheetCreator::SpritesheetCreator(QWidget *parent)
     : QMainWindow(parent)
@@ -17,13 +20,20 @@ SpritesheetCreator::SpritesheetCreator(QWidget *parent)
     ui->ImageTable->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Stretch);
     ui->ImageTable->horizontalHeader()->hide();
     ui->ImageTable->viewport()->installEventFilter(this);
+    ui->TilingConstant->addItem("Columns");
+    ui->TilingConstant->addItem("Rows");
+    Tiles = new Tiling();
 
     // Connections to buttons
     connect(ui->AddImagesButton, SIGNAL(clicked(bool)), this, SLOT(load_images()));
+    connect(ui->TilingNumber, SIGNAL(textChanged(QString)), this, SLOT(rows_and_columns_logic()));
+    connect(ui->TilingConstant, SIGNAL(currentTextChanged(QString)), this, SLOT(rows_and_columns_logic()));
+    // connect(ui->TilingNumber, SIGNAL(textChanged(QString)), this, SLOT(rows_and_columns_logic()));
 }
 
 SpritesheetCreator::~SpritesheetCreator()
 {
+    delete Tiles;
     delete ui;
 }
 
@@ -95,4 +105,53 @@ bool SpritesheetCreator::eventFilter(QObject* obj, QEvent* event)
     return obj->eventFilter(obj, event);
 }
 
+void SpritesheetCreator::calculate_sheet_size(){
+    double images_amount = ui->ImageTable->rowCount();
+    double tiling_number = ui->TilingNumber->value();
+    qDebug() << "Rows: " << Tiles->Rows;
+    if (ui->TilingConstant->currentText() == "Columns"){
+        Tiles->Columns = tiling_number;
+        Tiles->Rows = std::max((int)(images_amount/Tiles->Columns + 0.5), 1);
+    }
+    else {
+        Tiles->Rows = tiling_number;
+        Tiles->Columns = std::max((int)(images_amount/Tiles->Rows + 0.5), 1);
+    }
+}
 
+void SpritesheetCreator::rows_and_columns_logic(){
+    calculate_sheet_size();
+    if (ui->TilingConstant->currentText() == "Columns"){
+        QString newtext = QString::number(Tiles->Rows) + " Rows";
+        ui->TilingOtherNumber->setText(newtext);
+    }
+    else {
+        QString newtext = QString::number(Tiles->Columns) + " Columns";
+        ui->TilingOtherNumber->setText(newtext);
+    }
+}
+
+void SpritesheetCreator::on_actionClear_All_triggered()
+{
+    ui->ImageTable->setRowCount(0);
+}
+
+void SpritesheetCreator::on_actionLoad_Files_changed()
+{
+    if(ui->actionLoad_Files->isChecked()){
+        ui->LoadFilesDock->setVisible(true);
+    }
+    else {
+        ui->LoadFilesDock->setVisible(false);
+    }
+}
+
+void SpritesheetCreator::on_actionSpritesheet_Preview_changed()
+{
+    if(ui->actionSpritesheet_Preview->isChecked()){
+        ui->PreviewDock->setVisible(true);
+    }
+    else {
+        ui->PreviewDock->setVisible(false);
+    }
+}
