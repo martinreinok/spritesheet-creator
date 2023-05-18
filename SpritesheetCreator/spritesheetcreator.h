@@ -21,6 +21,7 @@ public:
 private slots:
     void load_images();
     void add_images_to_table(QStringList list_of_files);
+    bool eventFilter(QObject* obj, QEvent* event);
 
 private:
     Ui::SpritesheetCreator *ui;
