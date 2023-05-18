@@ -13,6 +13,10 @@
   <property name="windowTitle">
    <string>SpritesheetCreator</string>
   </property>
+  <property name="windowIcon">
+   <iconset>
+    <normaloff>C:/Users/Cs/Downloads/9tiles.ico</normaloff>C:/Users/Cs/Downloads/9tiles.ico</iconset>
+  </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QGridLayout" name="gridLayout_2"/>
   </widget>

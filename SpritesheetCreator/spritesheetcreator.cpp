@@ -4,16 +4,23 @@
 #include <filesystem>
 #include <QDropEvent>
 #include <QFileInfo>
+#include <QFileDialog>
 #include <QMimeData>
 #include <QVector>
+#include <vector>
 #include <string>
 #include <algorithm>
+#include <QMessageBox>
 
 SpritesheetCreator::SpritesheetCreator(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::SpritesheetCreator)
 {
     ui->setupUi(this);
+    // Classes
+    Tiles = new Tiling();
+    ImageProcessing = new ImageProcessor();
+
     // Initialize elements
     ui->ImageTable->setColumnCount(2);
     ui->ImageTable->setColumnHidden(1, true);
@@ -22,13 +29,16 @@ SpritesheetCreator::SpritesheetCreator(QWidget *parent)
     ui->ImageTable->viewport()->installEventFilter(this);
     ui->TilingConstant->addItem("Columns");
     ui->TilingConstant->addItem("Rows");
-    Tiles = new Tiling();
+
 
     // Connections to buttons
     connect(ui->AddImagesButton, SIGNAL(clicked(bool)), this, SLOT(load_images()));
     connect(ui->TilingNumber, SIGNAL(textChanged(QString)), this, SLOT(rows_and_columns_logic()));
     connect(ui->TilingConstant, SIGNAL(currentTextChanged(QString)), this, SLOT(rows_and_columns_logic()));
+    connect(ui->SaveSpritesheetButton, SIGNAL(clicked(bool)), this, SLOT(save_button()));
     // connect(ui->TilingNumber, SIGNAL(textChanged(QString)), this, SLOT(rows_and_columns_logic()));
+
+    rows_and_columns_logic();
 }
 
 SpritesheetCreator::~SpritesheetCreator()
@@ -45,6 +55,15 @@ void SpritesheetCreator::load_images()
     QStringList files = select_files.getOpenFileNames(this, "Image Sequence or Folder", "", accepted_files);
     qDebug() << files;
     add_images_to_table(files);
+}
+
+void SpritesheetCreator::error_messagebox(const QString& error_message) {
+    QMessageBox error_box;
+    error_box.setIcon(QMessageBox::Critical);
+    error_box.setWindowTitle("Error");
+    error_box.setText("An error has occurred:");
+    error_box.setInformativeText(error_message);
+    error_box.exec();
 }
 
 void SpritesheetCreator::add_images_to_table(QStringList list_of_files)
@@ -105,7 +124,8 @@ bool SpritesheetCreator::eventFilter(QObject* obj, QEvent* event)
     return obj->eventFilter(obj, event);
 }
 
-void SpritesheetCreator::calculate_sheet_size(){
+void SpritesheetCreator::calculate_sheet_size()
+{
     double images_amount = ui->ImageTable->rowCount();
     double tiling_number = ui->TilingNumber->value();
     qDebug() << "Rows: " << Tiles->Rows;
@@ -119,7 +139,8 @@ void SpritesheetCreator::calculate_sheet_size(){
     }
 }
 
-void SpritesheetCreator::rows_and_columns_logic(){
+void SpritesheetCreator::rows_and_columns_logic()
+{
     calculate_sheet_size();
     if (ui->TilingConstant->currentText() == "Columns"){
         QString newtext = QString::number(Tiles->Rows) + " Rows";
@@ -129,6 +150,24 @@ void SpritesheetCreator::rows_and_columns_logic(){
         QString newtext = QString::number(Tiles->Columns) + " Columns";
         ui->TilingOtherNumber->setText(newtext);
     }
+}
+
+void SpritesheetCreator::save_button()
+{
+    QVector<cv::Mat> opencv_images = ImageProcessing->get_images_from_table(ui->ImageTable);
+    qDebug() << opencv_images.length();
+    bool images_are_same_size = ImageProcessing->validate_image_size(opencv_images);
+    if (!images_are_same_size){
+        error_messagebox("Images are not the same size!");
+        return;
+    }
+    cv::Mat spritesheet = ImageProcessing->create_spritesheet(Tiles->Rows, Tiles->Columns, opencv_images);
+    if (spritesheet.empty()){
+        return;
+    }
+    QFileDialog file_dialog;
+    QString filename = file_dialog.getSaveFileName(this, "Save file", "", "PNG (*.png)");
+    ImageProcessing->opencv_save_image(spritesheet, filename);
 }
 
 void SpritesheetCreator::on_actionClear_All_triggered()

@@ -5,6 +5,7 @@
 #include <QObject>
 #include <QWidget>
 #include <QTableWidget>
+#include "imageprocessor.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class SpritesheetCreator; }
@@ -12,9 +13,11 @@ QT_END_NAMESPACE
 
 class Tiling {
 public:
-    int Rows = 0;
-    int Columns = 0;
+    int Rows = 1;
+    int Columns = 1;
 };
+
+class ImageProcessor;
 
 class SpritesheetCreator : public QMainWindow
 {
@@ -30,6 +33,8 @@ private slots:
     bool eventFilter(QObject* obj, QEvent* event);
     void calculate_sheet_size();
     void rows_and_columns_logic();
+    void error_messagebox(const QString& error_message);
+    void save_button();
 
     // Actions in the bar
     void on_actionClear_All_triggered();
@@ -37,7 +42,9 @@ private slots:
     void on_actionSpritesheet_Preview_changed();
 
 private:
+    // (╯°□°)╯︵ ┻━┻
     Ui::SpritesheetCreator *ui;
     Tiling* Tiles;
+    ImageProcessor* ImageProcessing;
 };
 #endif // SPRITESHEETCREATOR_H
