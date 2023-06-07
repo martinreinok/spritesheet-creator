@@ -62,7 +62,7 @@ SpritesheetCreator::~SpritesheetCreator()
 
 void SpritesheetCreator::load_images()
 {
-    QString accepted_files = "Image Files (*.PNG *.BMP);;All Files (*)";
+    QString accepted_files = "Image Files (*.PNG *.BMP *.JPG);;All Files (*)";
     QFileDialog select_files;
     select_files.setFileMode(QFileDialog::ExistingFiles);
     QStringList files = select_files.getOpenFileNames(this, "Image Sequence or Folder", "", accepted_files);
@@ -178,7 +178,14 @@ void SpritesheetCreator::save_button()
     if (spritesheet.empty()) { return; }
 
     QFileDialog file_dialog;
-    QString filename = file_dialog.getSaveFileName(this, "Save file", "", "PNG (*.png)");
+    QString filename;
+    if (ImageProcessing->doImagesHaveAlphaChannel(opencv_images)) {
+        filename = file_dialog.getSaveFileName(this, "Save file", "", "PNG (*.png)");
+    }
+    else {
+        filename = file_dialog.getSaveFileName(this, "Save file", "", "JPG (*.jpg)");
+    }
+
     if (filename.isEmpty()) { return; }
 
     ImageProcessing->opencv_save_image(spritesheet, filename);
@@ -196,7 +203,7 @@ void SpritesheetCreator::show_spritesheet_preview() {
 
         cv::Mat spritesheet;
         try {
-            spritesheet = ImageProcessing->create_spritesheet(Tiles->Rows, Tiles->Columns, opencv_images);
+            spritesheet = ImageProcessing->create_spritesheet(Tiles->Rows, Tiles->Columns, opencv_images, 4);
         }
         catch (...) {
             qDebug() << "Preview failed";

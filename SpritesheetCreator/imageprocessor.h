@@ -18,8 +18,9 @@ public:
     ImageProcessor();
     QVector<cv::Mat> get_images_from_table(QTableWidget * table);
     bool validate_image_size(QVector<cv::Mat> opencv_images);
-    cv::Mat create_spritesheet(int rows, int columns, QVector<cv::Mat> opencv_images);
+    cv::Mat create_spritesheet(int rows, int columns, QVector<cv::Mat> opencv_images, int resolutionDownsample = 1);
     void opencv_save_image(cv::Mat opencv_image, QString file_destination);
+    bool doImagesHaveAlphaChannel(QVector<cv::Mat> opencv_images);
 };
 
 #endif // IMAGEPROCESSOR_H

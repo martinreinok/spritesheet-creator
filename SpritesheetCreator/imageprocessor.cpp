@@ -34,18 +34,24 @@ bool ImageProcessor::validate_image_size(QVector<cv::Mat> opencv_images)
     return image_dimensions_set.size() == 1;
 }
 
-cv::Mat ImageProcessor::create_spritesheet(int rows, int columns, QVector<cv::Mat> opencv_images){
+cv::Mat ImageProcessor::create_spritesheet(int rows, int columns, QVector<cv::Mat> opencv_images, int resolutionDownsample){
     int image_height = opencv_images[0].size[0];
     int image_width = opencv_images[0].size[1];
-    cv::Mat spritesheet(image_height * rows, image_width * columns, CV_8UC4, cv::Scalar(0, 0, 0, 0));
+    int image_channels = opencv_images[0].channels();
+    cv::Mat spritesheet;
+    if (image_channels == 4) {
+        spritesheet = cv::Mat(image_height * rows, image_width * columns, CV_8UC4, cv::Scalar(0, 0, 0, 0));
+    } else {
+        spritesheet = cv::Mat(image_height * rows, image_width * columns, CV_8UC3, cv::Scalar(0, 0, 0));
+    }
     int current_row = 0;
     int current_column = 0;
-    for (const cv::Mat& image : opencv_images) {
-        image.copyTo(spritesheet(cv::Rect(current_column*image_width,
-                                          current_row*image_height,
-                                          image_width, image_height)));
+    for (int i = 0; i < opencv_images.size(); ++i) {
+        cv::Rect roi(current_column * image_width, current_row * image_height, image_width, image_height);
+        cv::Mat spritesheet_roi(spritesheet, roi);
+        opencv_images[i].copyTo(spritesheet_roi);
         current_column++;
-        if (current_column == columns){
+        if (current_column == columns) {
             current_row++;
             current_column = 0;
         }
@@ -56,5 +62,9 @@ cv::Mat ImageProcessor::create_spritesheet(int rows, int columns, QVector<cv::Ma
 void ImageProcessor::opencv_save_image(cv::Mat opencv_image, QString file_destination)
 {
     cv::imwrite(file_destination.toStdString(), opencv_image);
+}
+
+bool ImageProcessor::doImagesHaveAlphaChannel(QVector<cv::Mat> opencv_images) {
+    return opencv_images[0].channels() == 4;
 }
 
