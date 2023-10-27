@@ -1,7 +1,7 @@
 /********************************************************************************
 ** Form generated from reading UI file 'spritesheetcreator.ui'
 **
-** Created by: Qt User Interface Compiler version 6.5.0
+** Created by: Qt User Interface Compiler version 6.6.0
 **
 ** WARNING! All changes made in this file will be lost when recompiling UI file!
 ********************************************************************************/
@@ -79,9 +79,9 @@ public:
     {
         if (SpritesheetCreator->objectName().isEmpty())
             SpritesheetCreator->setObjectName("SpritesheetCreator");
-        SpritesheetCreator->resize(268, 534);
+        SpritesheetCreator->resize(379, 509);
         QIcon icon;
-        icon.addFile(QString::fromUtf8("C:/Users/Cs/Downloads/9tiles.ico"), QSize(), QIcon::Normal, QIcon::Off);
+        icon.addFile(QString::fromUtf8("9tiles.ico"), QSize(), QIcon::Normal, QIcon::Off);
         SpritesheetCreator->setWindowIcon(icon);
         actionClear_All = new QAction(SpritesheetCreator);
         actionClear_All->setObjectName("actionClear_All");
@@ -100,7 +100,7 @@ public:
         SpritesheetCreator->setCentralWidget(centralwidget);
         menubar = new QMenuBar(SpritesheetCreator);
         menubar->setObjectName("menubar");
-        menubar->setGeometry(QRect(0, 0, 268, 22));
+        menubar->setGeometry(QRect(0, 0, 379, 22));
         menuFile = new QMenu(menubar);
         menuFile->setObjectName("menuFile");
         menuEdit = new QMenu(menubar);

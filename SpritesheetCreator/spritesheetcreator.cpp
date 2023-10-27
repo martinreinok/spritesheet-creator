@@ -13,6 +13,8 @@
 #include <QMessageBox>
 #include <cmath>
 #include <QImage>
+#include <string>
+#include <sstream>
 // #include <Qt>
 
 SpritesheetCreator::SpritesheetCreator(QWidget *parent)
@@ -32,6 +34,7 @@ SpritesheetCreator::SpritesheetCreator(QWidget *parent)
     ui->ImageTable->viewport()->installEventFilter(this);
     ui->TilingConstant->addItem("Columns");
     ui->TilingConstant->addItem("Rows");
+    this->lastUsedDirectory = QDir::homePath();
 
     // Graphics
     graphics_scene = new QGraphicsScene();
@@ -93,6 +96,7 @@ void SpritesheetCreator::add_images_to_table(QStringList list_of_files)
         ui->ImageTable->setItem(current_table_rows + i, 0, qt_file_name);
         ui->ImageTable->setItem(current_table_rows + i, 1, qt_file_full_path);
     }
+    this->show_spritesheet_preview(); // Also update preview
 }
 
 bool SpritesheetCreator::eventFilter(QObject* obj, QEvent* event)
@@ -179,14 +183,21 @@ void SpritesheetCreator::save_button()
 
     QFileDialog file_dialog;
     QString filename;
+    std::ostringstream suggested_file_name_strstream;
+    suggested_file_name_strstream << "spritesheet" << "_[name]_" << Tiles->Rows << "x" << Tiles->Columns << "_" << opencv_images.length() << "f" << "_" << opencv_images[0].size[0] << "x" << opencv_images[0].size[1];
+    QString suggested_file_name = this->lastUsedDirectory.filePath(QString::fromStdString(suggested_file_name_strstream.str()));
+
     if (ImageProcessing->doImagesHaveAlphaChannel(opencv_images)) {
-        filename = file_dialog.getSaveFileName(this, "Save file", "", "PNG (*.png)");
+        filename = file_dialog.getSaveFileName(this, "Save file", suggested_file_name, "PNG (*.png)");
     }
     else {
-        filename = file_dialog.getSaveFileName(this, "Save file", "", "JPG (*.jpg)");
+        filename = file_dialog.getSaveFileName(this, "Save file", suggested_file_name, "JPG (*.jpg)");
     }
 
     if (filename.isEmpty()) { return; }
+
+    // Update the last used directory to the selected path
+    this->lastUsedDirectory = QFileInfo(filename).absolutePath();
 
     ImageProcessing->opencv_save_image(spritesheet, filename);
 }

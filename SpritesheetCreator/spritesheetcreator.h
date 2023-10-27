@@ -3,6 +3,7 @@
 
 #include <QMainWindow>
 #include <QObject>
+#include <QDir>
 #include <QGraphicsView>
 #include <QWidget>
 #include <QTableWidget>
@@ -49,5 +50,6 @@ private:
     Tiling* Tiles;
     ImageProcessor* ImageProcessing;
     QGraphicsScene* graphics_scene;
+    QDir lastUsedDirectory;
 };
 #endif // SPRITESHEETCREATOR_H

@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>268</width>
-    <height>534</height>
+    <width>379</width>
+    <height>509</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -15,7 +15,7 @@
   </property>
   <property name="windowIcon">
    <iconset>
-    <normaloff>C:/Users/Cs/Downloads/9tiles.ico</normaloff>C:/Users/Cs/Downloads/9tiles.ico</iconset>
+    <normaloff>9tiles.ico</normaloff>9tiles.ico</iconset>
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QGridLayout" name="gridLayout_2"/>
@@ -25,7 +25,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>268</width>
+     <width>379</width>
      <height>22</height>
     </rect>
    </property>

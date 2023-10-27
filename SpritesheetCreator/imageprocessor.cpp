@@ -31,13 +31,15 @@ bool ImageProcessor::validate_image_size(QVector<cv::Mat> opencv_images)
         image_dimensions_set.insert(image.size[0]);
         image_dimensions_set.insert(image.size[1]);
     }
-    return image_dimensions_set.size() == 1;
+    return image_dimensions_set.size() == 1 || image_dimensions_set.size() == 2;
 }
 
 cv::Mat ImageProcessor::create_spritesheet(int rows, int columns, QVector<cv::Mat> opencv_images, int resolutionDownsample){
     int image_height = opencv_images[0].size[0];
     int image_width = opencv_images[0].size[1];
     int image_channels = opencv_images[0].channels();
+    qInfo() << "height: " << image_height;
+    qInfo() << "width: " << image_width;
     cv::Mat spritesheet;
     if (image_channels == 4) {
         spritesheet = cv::Mat(image_height * rows, image_width * columns, CV_8UC4, cv::Scalar(0, 0, 0, 0));
